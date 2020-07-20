@@ -1,5 +1,6 @@
 # Logs
-logs
+logs/*
+!/logs/.gitkeep
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -102,3 +103,11 @@ dist
 
 # TernJS port file
 .tern-port
+
+node_modules
+build
+npm-debug.log
+.DS_Store
+.idea
+config/local.json
+*.iml
