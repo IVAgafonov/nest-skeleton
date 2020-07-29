@@ -1,4 +1,4 @@
-import { PipeTransform, Injectable, ArgumentMetadata } from '@nestjs/common';
+import {ArgumentMetadata, Injectable, PipeTransform} from '@nestjs/common';
 import {ValidateFieldException} from "../../responses/errors/validate-field-exception";
 import {ValidateFieldExceptions} from "../../responses/errors/validate-field-exceptions";
 import {UserAuthRequest} from "../../requests/user/user-auth-request";
@@ -14,9 +14,13 @@ export class AuthUserValidator implements PipeTransform {
         if (!value.password || value.password.length < 3 || value.password.length > 64) {
             errors.push(new ValidateFieldException('password', 'Invalid password'));
         }
+        if (!(value.type in AuthTokenType)) {
+            errors.push(new ValidateFieldException('type', 'Invalid type'));
+        }
         if (errors.length) {
             throw new ValidateFieldExceptions(errors);
         }
+
         value.type = value.type || AuthTokenType.TEMPORARY;
         return value;
     }
