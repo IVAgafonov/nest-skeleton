@@ -7,13 +7,16 @@ import {UserController} from "./api/controllers/user-controller";
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {GlobalHttpFilter} from "./api/filters/global-http-filter";
 import {GlobalMiddleware} from "./api/middlewares/global-middleware";
-import {UserService} from "./service/user-service";
+import {UserService} from "./service/user/user-service";
 import typeOrmConfig = require("./ormconfig");
-import {CryptoService} from "./service/crypto-service";
+import {CryptoService} from "./service/crypto/crypto-service";
+import {PrometheusController} from "./api/controllers/prometheus-controller";
+import {PrometheusService} from "./service/prometheus/prometheus-service";
 
 @Module({
     controllers: [
-        UserController
+        UserController,
+        PrometheusController
     ],
     providers: [{
         provide: APP_INTERCEPTOR,
@@ -25,12 +28,14 @@ import {CryptoService} from "./service/crypto-service";
         provide: UserService,
         useClass: UserService,
     }, {
+        provide: PrometheusService,
+        useClass: PrometheusService,
+    }, {
         provide: CryptoService,
         useClass: CryptoService,
     }],
     imports: [
         DbModule,
-        MetricsModule,
         LogModule,
         TypeOrmModule.forRoot(typeOrmConfig)
     ]

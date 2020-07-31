@@ -13,7 +13,7 @@ import {UserResponse} from "../responses/user/user-response";
 import {BadRequestException} from "../responses/errors/bad-request-exception";
 import {RoleGuard} from "../guards/role-guard";
 import {CreateUserValidator} from "../validators/user/create-user-validator";
-import {UserService} from "../../service/user-service";
+import {UserService} from "../../service/user/user-service";
 import {UserEntity, UserGroup} from "../../entities/user/user-entity";
 import {UserAuthRequest} from "../requests/user/user-auth-request";
 import {InternalErrorException} from "../responses/errors/internal-error-exception";
@@ -25,6 +25,7 @@ import {AuthUserValidator} from "../validators/user/auth-user-validator";
 import {ValidateFieldException} from "../responses/errors/validate-field-exception";
 import {AuthorizedRequest} from "../requests/authorized-request";
 import {Roles} from "../guards/role-guard";
+import {Metric, PrometheusService} from "../../service/prometheus/prometheus-service";
 
 @Controller('api/user')
 @ApiTags("user")
@@ -46,6 +47,7 @@ export class UserController {
     @Post('register')
     @Header('Content-Type', 'application/json')
     @HttpCode(200)
+    @Metric('register_user')
     register_user(@Body(CreateUserValidator) userRegister: UserRegisterRequest): Observable<UserAuthResponse> {
         const user = new UserEntity();
         user.email = userRegister.email;
@@ -68,6 +70,7 @@ export class UserController {
                 s.complete();
             }, () => {
                 this.log.info("User " + userRegister.email + " has successfully registered");
+                PrometheusService.counter('registered_users').inc();
             });
         });
     }
@@ -83,6 +86,7 @@ export class UserController {
     @Post('auth')
     @Header('Content-type', 'application/json')
     @HttpCode(200)
+    @Metric('auth_user')
     auth_user(@Body(AuthUserValidator) userAuthRequest: UserAuthRequest): Observable<UserAuthResponse> {
         return new Observable<UserAuthResponse>(s => {
             this.userService.getUserByEmail(userAuthRequest.email).subscribe((userEntity:UserEntity) => {
@@ -127,6 +131,7 @@ export class UserController {
     @ApiBearerAuth()
     @UseGuards(RoleGuard)
     @Roles(UserGroup.USER, UserGroup.ADMIN)
+    @Metric('get_user_info')
     get_user(@Req() req: AuthorizedRequest): UserResponse {
         return UserResponse.createFromEntity(<UserEntity>(req.user));
     }

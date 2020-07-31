@@ -1,5 +1,5 @@
 import {CryptoService} from "./crypto-service";
-import {CryptoConfig} from "../entities/configs/crypto-config";
+import {CryptoConfig} from "../../entities/configs/crypto-config";
 import "jasmine";
 
 describe('JsonUtils', () => {

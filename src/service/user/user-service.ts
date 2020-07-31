@@ -1,11 +1,11 @@
 import {Inject, Injectable} from "@nestjs/common";
-import {MYSQL_MAIN_CONN} from "../providers/db/db.providers";
+import {MYSQL_MAIN_CONN} from "../../providers/db/db.providers";
 import {Connection} from "typeorm";
-import {UserEntity, UserGroup} from "../entities/user/user-entity"
-import {AuthEntity, AuthTokenType} from "../entities/auth/auth-entity";
+import {UserEntity, UserGroup} from "../../entities/user/user-entity"
+import {AuthEntity, AuthTokenType} from "../../entities/auth/auth-entity";
 import {Observable} from 'rxjs';
 import {getLogger} from "log4js";
-import {CryptoService} from "./crypto-service";
+import {CryptoService} from "../crypto/crypto-service";
 
 @Injectable()
 export class UserService {

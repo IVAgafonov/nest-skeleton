@@ -12,7 +12,7 @@
     "migrationsRun": true
   },
   "app": {
-    "apiPort": 80
+    "apiPort": 3000
   },
   "crypto": {
     "salt": "any-salt"
