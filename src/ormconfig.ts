@@ -1,8 +1,8 @@
 import config from "config";
-import {MysqlConf} from "./entities/configs/mysql-config";
+import {MysqlConfig} from "./entities/configs/mysql-config";
 import { ConnectionOptions } from 'typeorm';
 
-const mysqlConf = config.get<MysqlConf>('mysql') as MysqlConf;
+const mysqlConf = config.get<MysqlConfig>('mysql') as MysqlConfig;
 
 const typeOrmConfig: ConnectionOptions = {
     type: 'mysql',
@@ -13,11 +13,11 @@ const typeOrmConfig: ConnectionOptions = {
     "password": mysqlConf.password,
     "timezone": mysqlConf.timezone,
     "cli": {
-        "migrationsDir": mysqlConf.migrationsDir
+        "migrationsDir": "src/" + mysqlConf.migrations
     },
+    "migrations": ["src/" + mysqlConf.migrations + "/*.ts"],
     "synchronize": mysqlConf.synchronize,
-    "migrationsRun": true,
-    "migrations": ["migrations/mysql/{*.ts,*.js}"]
+    "migrationsRun": mysqlConf.migrationsRun,
 }
 
 export = typeOrmConfig;

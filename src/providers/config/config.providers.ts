@@ -1,17 +1,21 @@
 import config from "config";
-import {MysqlConf} from "../../entities/configs/mysql-config";
+import {MysqlConfig} from "../../entities/configs/mysql-config";
+import {AppConfig} from "../../entities/configs/app-config";
+import {CryptoConfig} from "../../entities/configs/crypto-config";
 
 export const APP_CONF = 'APP_CONF'
 export const CRYPTO_CONF = 'CRYPTO_CONF'
 export const MYSQL_MAIN_CONF = 'MYSQL_MAIN_CONF'
 
-export const configProviders = [{
+export const configProviders = [
+    {
         provide: MYSQL_MAIN_CONF,
-        useValue:  config.get<MysqlConf>("mysql") as MysqlConf
+        useValue:  config.get<MysqlConfig>("mysql") as MysqlConfig
     }, {
         provide: APP_CONF,
-        useValue:  config.get<MysqlConf>("app") as MysqlConf
+        useValue:  config.get<AppConfig>("app") as AppConfig
     },{
         provide: CRYPTO_CONF,
-        useValue:  config.get<MysqlConf>("crypto") as MysqlConf
-    }];
+        useValue:  config.get<CryptoConfig>("crypto") as CryptoConfig
+    }
+];
