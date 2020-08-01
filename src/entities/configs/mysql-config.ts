@@ -1,12 +1,11 @@
-export interface MysqlConf {
+export interface MysqlConfig {
     database: string,
     host: string,
     port: number,
     user: string,
     password: string,
     timezone: string,
-    migrationsDir: string,
-    migrations: string[],
+    migrations: string,
     synchronize: boolean,
     migrationsRun: boolean
 }

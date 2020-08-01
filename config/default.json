@@ -6,8 +6,7 @@
     "user": "root",
     "password": "",
     "timezone": "+00:00",
-    "migrationsDir": "migrations/mysql",
-    "migrations": ["migrations/mysql/{*.ts,*.js}"],
+    "migrations": "migrations/mysql",
     "synchronize": true,
     "migrationsRun": true
   },

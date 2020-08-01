@@ -20,9 +20,9 @@ async function bootstrap() {
     app.disable('etag');
 
     const options = new DocumentBuilder()
-        .setTitle('Account service')
+        .setTitle('Nest skeleton service')
         .setVersion('1.0')
-        .addTag('account-service')
+        .addTag('nest-skeleton-service')
         .addBearerAuth()
         .build();
     const document = SwaggerModule.createDocument(app, options);

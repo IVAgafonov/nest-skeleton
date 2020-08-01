@@ -14,7 +14,8 @@
     "start": "node ./build/start.js",
     "build:ts": "rm -rf ./build/ && tsc",
     "build": "npm run build:ts",
-    "migration-generate": "ts-node node_modules/.bin/typeorm migration:create -f ./src/ormconfig.ts"
+    "migration-generate": "ts-node node_modules/.bin/typeorm migration:create -f ./src/ormconfig.ts",
+    "migration-apply": "ts-node node_modules/.bin/typeorm migration:run -f ./src/ormconfig.ts"
   },
   "dependencies": {
     "@nestjs/common": "^7.0.0",
