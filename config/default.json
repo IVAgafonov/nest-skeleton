@@ -1,0 +1,20 @@
+{
+  "mysql": {
+    "database": "",
+    "host": "localhost",
+    "port": 3306,
+    "user": "root",
+    "password": "",
+    "timezone": "+00:00",
+    "migrationsDir": "migrations/mysql",
+    "migrations": ["migrations/mysql/{*.ts,*.js}"],
+    "synchronize": true,
+    "migrationsRun": true
+  },
+  "app": {
+    "apiPort": 3000
+  },
+  "crypto": {
+    "salt": "any-salt"
+  }
+}

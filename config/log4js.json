@@ -1,0 +1,30 @@
+{
+  "appenders": {
+    "app": {
+      "type": "file",
+      "filename": "logs/server.log",
+      "maxLogSize": 10485760,
+      "numBackups": 3
+    },
+    "errorFile": {
+      "type": "file",
+      "filename": "logs/server-error.log"
+    },
+    "errors": {
+      "type": "logLevelFilter",
+      "level": "WARN",
+      "appender": "errorFile"
+    },
+    "out": {
+      "type": "stdout"
+    }
+  },
+  "categories": {
+    "default": {
+      "appenders": [
+        "out", "app","errors"
+      ],
+      "level": "DEBUG"
+    }
+  }
+}
