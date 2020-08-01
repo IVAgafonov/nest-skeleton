@@ -1,7 +1,6 @@
 import {Module, NestModule, MiddlewareConsumer, RequestMethod} from "@nestjs/common";
 import {DbModule} from "./providers/db/db.module";
 import {APP_FILTER, APP_INTERCEPTOR} from "@nestjs/core";
-import {ErrorsModule, LogModule, MetricsInterceptor, MetricsModule} from "@promonavi/baseservice";
 import {BullModule} from "@nestjs/bull";
 import {UserController} from "./api/controllers/user-controller";
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -19,9 +18,6 @@ import {PrometheusService} from "./service/prometheus/prometheus-service";
         PrometheusController
     ],
     providers: [{
-        provide: APP_INTERCEPTOR,
-        useClass: MetricsInterceptor,
-    }, {
         provide: APP_FILTER,
         useClass: GlobalHttpFilter,
     }, {
@@ -36,7 +32,6 @@ import {PrometheusService} from "./service/prometheus/prometheus-service";
     }],
     imports: [
         DbModule,
-        LogModule,
         TypeOrmModule.forRoot(typeOrmConfig)
     ]
 })
