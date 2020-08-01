@@ -8,7 +8,7 @@ RUN chown -R daemon:daemon /opt/docker
 
 COPY --chown=daemon:daemon . /opt/docker
 
-RUN mkdir logs && chown -R daemon:daemon logs
+RUN mkdir -p logs && chown -R daemon:daemon logs
 
 EXPOSE 8082
 
