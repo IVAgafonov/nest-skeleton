@@ -114,11 +114,11 @@ export function Metric(name: string): MethodDecorator {
     return (target, key, descriptor: PropertyDescriptor) => {
         const method = descriptor.value;
 
-        descriptor.value = function(...args: any[]): any {
-            return PrometheusService.timer(name).time(() => method.apply(this, args));
-        };
-
-        return descriptor;
+        descriptor.value = new Proxy(method, {
+            apply: function (target, thisArg, args) {
+                return PrometheusService.timer(name).time(() => target.apply(thisArg, args));
+            }
+        });
     };
 }
 

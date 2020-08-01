@@ -47,6 +47,7 @@ export class UserController {
     @Post('register')
     @Header('Content-Type', 'application/json')
     @HttpCode(200)
+    @Metric('register_user')
     register_user(@Body(CreateUserValidator) userRegister: UserRegisterRequest): Observable<UserAuthResponse> {
         const user = new UserEntity();
         user.email = userRegister.email;
@@ -85,6 +86,7 @@ export class UserController {
     @Post('auth')
     @Header('Content-type', 'application/json')
     @HttpCode(200)
+    @Metric('auth_user')
     auth_user(@Body(AuthUserValidator) userAuthRequest: UserAuthRequest): Observable<UserAuthResponse> {
         return new Observable<UserAuthResponse>(s => {
             this.userService.getUserByEmail(userAuthRequest.email).subscribe((userEntity:UserEntity) => {
@@ -129,6 +131,7 @@ export class UserController {
     @ApiBearerAuth()
     @UseGuards(RoleGuard)
     @Roles(UserGroup.USER, UserGroup.ADMIN)
+    @Metric('get_user')
     get_user(@Req() req: AuthorizedRequest): UserResponse {
         return UserResponse.createFromEntity(<UserEntity>(req.user));
     }
