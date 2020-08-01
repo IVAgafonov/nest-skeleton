@@ -1,7 +1,7 @@
 version: "2.4"
 
 services:
-  b2btranslations:
+  nest-skeleton:
     image: https://hub.docker.com/repository/docker/igoradm90/nest-skeleton
     container_name: nest-skeleton
     environment:
