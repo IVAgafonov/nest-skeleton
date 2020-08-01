@@ -2,13 +2,13 @@ version: "2.4"
 
 services:
   b2btranslations:
-    image: hub.devuptolike.com:5000/b2b/b2btranslations:${CI_COMMIT_SHORT_SHA}
-    container_name: account-backend
+    image: https://hub.docker.com/repository/docker/igoradm90/nest-skeleton
+    container_name: nest-skeleton
     environment:
       TZ: Europe/Moscow
     ports:
       - 3001:3000
     volumes:
-      - /etc/apps/account/local.json:/opt/docker/config/local.json:ro
-      - /var/log/docker/account:/opt/docker/logs
+      - /etc/apps/app/local.json:/opt/docker/config/local.json:ro
+      - /var/log/docker/app:/opt/docker/logs
     restart: always
