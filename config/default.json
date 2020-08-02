@@ -10,6 +10,11 @@
     "synchronize": true,
     "migrationsRun": true
   },
+  "redis": {
+    "host": "localhost",
+    "port": 6379,
+    "password": ""
+  },
   "app": {
     "apiPort": 3000
   },
