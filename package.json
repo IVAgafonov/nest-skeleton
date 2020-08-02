@@ -10,8 +10,10 @@
   "type": "commonjs",
   "scripts": {
     "start-dev": "nodemon --config nodemon.json",
+    "workers-dev": "nodemon --config nodemon-workers.json",
     "test": "ts-node node_modules/jasmine/bin/jasmine --config=jasmine.json",
     "start": "node ./build/start.js",
+    "workers": "node ./build/workers.js",
     "build:ts": "rm -rf ./build/ && tsc",
     "build": "npm run build:ts",
     "migration-generate": "ts-node node_modules/.bin/typeorm migration:create -f ./src/ormconfig.ts",

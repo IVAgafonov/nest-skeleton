@@ -22,11 +22,10 @@ async function bootstrap() {
     const options = new DocumentBuilder()
         .setTitle('Nest skeleton service')
         .setVersion('1.0')
-        .addTag('nest-skeleton-service')
         .addBearerAuth()
         .build();
     const document = SwaggerModule.createDocument(app, options);
-    SwaggerModule.setup('', app, document);
+    SwaggerModule.setup('api', app, document);
     app.startAllMicroservicesAsync();
     await app.listen(config.get<number>('app.apiPort'));
 }

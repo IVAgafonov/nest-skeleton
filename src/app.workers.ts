@@ -1,4 +1,4 @@
-import {Module, NestModule, MiddlewareConsumer, RequestMethod} from "@nestjs/common";
+import {Module, NestModule, MiddlewareConsumer, RequestMethod, OnModuleInit} from "@nestjs/common";
 import {DbModule} from "./providers/db/db.module";
 import {APP_FILTER, APP_INTERCEPTOR} from "@nestjs/core";
 import {BullModule} from "@nestjs/bull";
@@ -20,27 +20,8 @@ import {doc} from "prettier";
 import { join } from 'path';
 
 @Module({
-    controllers: [
-        UserController,
-        PrometheusController,
-        ExampleController
-    ],
-    providers: [{
-        provide: APP_FILTER,
-        useClass: GlobalHttpFilter,
-    }, {
-        provide: UserService,
-        useClass: UserService,
-    }, {
-        provide: PrometheusService,
-        useClass: PrometheusService,
-    }, {
-        provide: CryptoService,
-        useClass: CryptoService,
-    }, {
-        provide: LoggerService,
-        useClass: LoggerService
-    }//,
+    controllers: [],
+    providers: [
         //AsyncTaskConsumer //async process in same proc
     ],
     imports: [
@@ -59,10 +40,7 @@ import { join } from 'path';
         }),
     ]
 })
-export class AppModule implements NestModule {
-    configure(consumer: MiddlewareConsumer) {
-        consumer.apply(GlobalMiddleware).forRoutes({
-            path: '*', method: RequestMethod.ALL
-        });
+export class WorkersModule implements OnModuleInit {
+    onModuleInit() {
     }
 }
