@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {UserGroup, UserEntity} from "../../../entities/user/user-entity";
-import {AbstractEntity} from "../../../entities/abstract-entity";
 
-export class UserResponse extends AbstractEntity {
+export class UserResponse{
     @ApiProperty({
         type: Number
     })

@@ -137,6 +137,21 @@ export class UserService {
         });
     }
 
+    logoutUserById(user_id: number, token?: string): Observable<boolean> {
+        return new Observable(s => {
+            this.conn.query(
+                "DELETE FROM app_users_auth_tokens WHERE user_id = ?" + (token ? " AND token = ?" : ""),
+                token ? [user_id, token] : [user_id]).then(res => {
+                s.next(true);
+                s.complete();
+            }, err => {
+                getLogger().error(err);
+                s.error();
+                s.complete()
+            });
+        });
+    }
+
     passwordsEqual(hashedPassword: string, clearPassword: string) {
         return hashedPassword === this.cryptoService.hashPassword(clearPassword);
     }

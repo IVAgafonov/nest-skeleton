@@ -2,7 +2,7 @@ import {CryptoService} from "./crypto-service";
 import {CryptoConfig} from "../../entities/configs/crypto-config";
 import "jasmine";
 
-describe('JsonUtils', () => {
+describe('Test crypto service', () => {
 
     it('Test hash password', () => {
         const cryptoService = new CryptoService(<CryptoConfig>{salt:"test-salt"})

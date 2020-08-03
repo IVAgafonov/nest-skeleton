@@ -1,5 +1,5 @@
 import {getLogger} from "log4js";
-import {Body, Controller, Get, Header, HttpCode, Post, Req, UseGuards, SetMetadata} from "@nestjs/common";
+import {Body, Controller, Get, Header, HttpCode, Post, Req, UseGuards, SetMetadata, Param, Query} from "@nestjs/common";
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -26,6 +26,7 @@ import {ValidateFieldException} from "../responses/errors/validate-field-excepti
 import {AuthorizedRequest} from "../requests/authorized-request";
 import {Roles} from "../guards/role-guard";
 import {Metric, PrometheusService} from "../../service/prometheus/prometheus-service";
+import {MessageResponse} from "../responses/system/message-response";
 
 @Controller('api/user')
 @ApiTags("user")
@@ -55,22 +56,27 @@ export class UserController {
         user.password = userRegister.password;
         user.groups = <UserGroup[]>[UserGroup.USER];
         return new Observable<UserAuthResponse>(s => {
-            this.userService.createUser(user).subscribe((user_id: number) => {
-                this.userService.authUserById(user_id, AuthTokenType.TEMPORARY).subscribe((authEntity: AuthEntity) => {
-                    s.next(UserAuthResponse.createFromEntity(authEntity));
+            this.userService.getUserByEmail(user.email).subscribe((existedUser: UserEntity) => {
+                    s.error(new BadRequestException("User already exists"));
                     s.complete();
                 }, err => {
-                    this.log.info("User " + userRegister.email + " auth error");
-                    s.error(new InternalErrorException("Can't auth user"));
+                this.userService.createUser(user).subscribe((user_id: number) => {
+                    this.userService.authUserById(user_id, AuthTokenType.TEMPORARY).subscribe((authEntity: AuthEntity) => {
+                        s.next(UserAuthResponse.createFromEntity(authEntity));
+                        s.complete();
+                    }, err => {
+                        this.log.info("User " + userRegister.email + " auth error");
+                        s.error(new InternalErrorException("Can't auth user"));
+                        s.complete();
+                    });
+                }, err => {
+                    this.log.info("User " + userRegister.email + " create error");
+                    s.error(new InternalErrorException("Can't create new user"));
                     s.complete();
+                }, () => {
+                    this.log.info("User " + userRegister.email + " has successfully registered");
+                    PrometheusService.counter('registered_users').inc();
                 });
-            }, err => {
-                this.log.info("User " + userRegister.email + " create error");
-                s.error(new InternalErrorException("Can't create new user"));
-                s.complete();
-            }, () => {
-                this.log.info("User " + userRegister.email + " has successfully registered");
-                PrometheusService.counter('registered_users').inc();
             });
         });
     }
@@ -115,6 +121,56 @@ export class UserController {
             }, () => {
                 this.log.info("User " + userAuthRequest.email + " has successfully logged in");
             });
+        });
+    }
+
+    @ApiOperation({
+        summary: "Logout user",
+        description: "Logout user"
+    })
+    @ApiOkResponse({description: "Success", type: MessageResponse})
+    @ApiBadRequestResponse({description: "Error", type: BadRequestException})
+    @ApiInternalServerErrorResponse({description: "Error", type: InternalErrorException})
+    @Get('logout')
+    @Header('Content-type', 'application/json')
+    @ApiBearerAuth()
+    @UseGuards(RoleGuard)
+    @Roles(UserGroup.USER, UserGroup.ADMIN)
+    @Metric('logout_user')
+    logout_user(@Req() req: AuthorizedRequest): Observable<MessageResponse> {
+        return new Observable<MessageResponse>(s => {
+            this.userService.logoutUserById(req.user.id, (<string>req.header('Authorization')).replace(/bearer\s+/i, '')).subscribe(e => {
+                s.next(new MessageResponse("Logged out"));
+                s.complete();
+            }, err => {
+                s.error(new InternalErrorException());
+                s.complete();
+            })
+        });
+    }
+
+    @ApiOperation({
+        summary: "Logout user from all devices",
+        description: "Logout user from all devices"
+    })
+    @ApiOkResponse({description: "Success", type: MessageResponse})
+    @ApiBadRequestResponse({description: "Error", type: BadRequestException})
+    @ApiInternalServerErrorResponse({description: "Error", type: InternalErrorException})
+    @Get('logout/all')
+    @Header('Content-type', 'application/json')
+    @ApiBearerAuth()
+    @UseGuards(RoleGuard)
+    @Roles(UserGroup.USER, UserGroup.ADMIN)
+    @Metric('logout_all_user')
+    logout_all_user(@Req() req: AuthorizedRequest): Observable<MessageResponse> {
+        return new Observable<MessageResponse>(s => {
+            this.userService.logoutUserById(req.user.id).subscribe(e => {
+                s.next(new MessageResponse("Logged out"));
+                s.complete();
+            }, err => {
+                s.error(new InternalErrorException());
+                s.complete();
+            })
         });
     }
 
