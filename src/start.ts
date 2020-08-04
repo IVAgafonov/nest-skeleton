@@ -7,7 +7,6 @@ import {NestExpressApplication} from "@nestjs/platform-express";
 import {ValidationPipe} from "@nestjs/common";
 import bodyParser from "body-parser";
 import {MicroserviceOptions, Transport} from "@nestjs/microservices"
-import {getLogger} from "log4js";
 
 async function bootstrap() {
     const app = await NestFactory.create<NestExpressApplication>(AppModule);

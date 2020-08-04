@@ -51,7 +51,8 @@ import { join } from 'path';
             useFactory: async (redisConf: RedisConfig) => ({
                 redis: redisConf,
                 processors: [ {
-                    path: join(__dirname, 'workers/AsyncTaskConsumerExternal.ts'),
+                    path: join(__dirname, 'workers/AsyncTaskConsumerExternal.' +
+                        (process.env.NODE_ENV === 'development' ? 'ts' : 'js')),
                     concurrency: 2
                 } ],
             }),
