@@ -10,7 +10,7 @@ COPY --chown=daemon:daemon . /opt/docker
 
 RUN mkdir -p logs && chown -R daemon:daemon logs
 
-EXPOSE 81
+EXPOSE 8040
 
 # Run everything after as non-privileged user.
 USER daemon

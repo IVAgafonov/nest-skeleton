@@ -1,7 +1,7 @@
 import axios from "axios";
 import "jasmine";
 
-const BASE_URL = 'http://localhost:81';
+const BASE_URL = 'http://localhost:8040';
 
 describe('Test user controller', () => {
 
