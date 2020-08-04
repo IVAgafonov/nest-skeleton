@@ -219,7 +219,7 @@ describe('Test user controller', () => {
     });
 
     it('Logout all devices', (done) => {
-        axios.get(BASE_URL + '/api/user/logout', {
+        axios.get(BASE_URL + '/api/user/logout/all', {
             headers: {
                 'authorization': 'bearer ' + secondToken
             }
