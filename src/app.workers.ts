@@ -14,7 +14,7 @@ import {RedisConfig} from "./entities/configs/redis-config";
 import {ConfigModule} from "./providers/config/config.module";
 import {REDIS_MAIN_CONF} from "./providers/config/config.providers";
 import {AsyncTaskConsumer} from "./workers/AsyncTaskConsumer";
-import {ExampleController} from "./api/controllers/example-controller";
+import {GoogleController} from "./api/controllers/google-controller";
 import {LoggerService} from "./service/logger/logger-service";
 import {doc} from "prettier";
 import { join } from 'path';
@@ -27,14 +27,14 @@ import { join } from 'path';
     imports: [
         DbModule,
         BullModule.registerQueueAsync({ //async process in separated proc
-            name: 'async_task',
+            name: 'google_autocomplete_task',
             imports: [ConfigModule],
             useFactory: async (redisConf: RedisConfig) => ({
                 redis: redisConf,
                 processors: [ {
-                    path: join(__dirname, 'workers/AsyncTaskConsumerExternal.' +
+                    path: join(__dirname, 'workers/google-autocomplete/google-autocomplete-consumer.' +
                         (process.env.NODE_ENV === 'development' ? 'ts' : 'js')),
-                    concurrency: 2
+                    concurrency: 3
                 } ],
             }),
             inject: [REDIS_MAIN_CONF]

@@ -9,6 +9,9 @@ yarn-error.log*
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
+assets/chrome-profiles/*
+!assets/chrome-profiles/.gitkeep
+
 # Runtime data
 pids
 *.pid
