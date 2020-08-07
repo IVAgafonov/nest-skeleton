@@ -1,7 +1,8 @@
 import axios from "axios";
 import "jasmine";
+import config from "config";
 
-const BASE_URL = 'http://localhost:8040';
+const BASE_URL = 'http://localhost:' + config.get<number>('app.apiPort');
 
 describe('Test user controller', () => {
 
