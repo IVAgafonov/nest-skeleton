@@ -1,4 +1,10 @@
-FROM node:14
+FROM node:14.7.0
+
+RUN apt-get update \
+&& apt-get install -y \
+   unzip \
+   wget \
+   libnss3 
 
 WORKDIR /opt/docker
 

@@ -52,6 +52,7 @@ export class GoogleController {
     @ApiBearerAuth()
     @UseGuards(RoleGuard)
     @Roles(UserGroup.USER, UserGroup.ADMIN)
+    @HttpCode(200)
     @Metric('google_autocomplete')
     google_autocomplete(@Body() autocomplete_request: GoogleAutocompleteRequest): Promise<GoogleAutocompleteResponses> {
         return new Promise<GoogleAutocompleteResponses>((resolve, reject) => {
