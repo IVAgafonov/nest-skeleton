@@ -7,8 +7,9 @@ RUN id -u daemon &>/dev/null || useradd -r -g daemon
 RUN chown -R daemon:daemon /opt/docker
 
 COPY --chown=daemon:daemon . /opt/docker
-COPY --chown=daemon:daemon /tmp/chrome-profiles /tmp/chrome-profiles
 RUN mkdir -p logs && chown -R daemon:daemon logs
+RUN mkdir -p /tmp/chrome-profiles && chown -R daemon:daemon logs
+COPY --chown=daemon:daemon /tmp/chrome-profiles /tmp/chrome-profiles
 
 EXPOSE 8050
 
