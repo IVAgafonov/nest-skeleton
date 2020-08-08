@@ -61,8 +61,6 @@ export class GoogleController {
                 new GoogleAutocompleteTaskEntity(autocomplete_request.keywords, autocomplete_request.lang)
             ).then(job => job.finished().then(results => {
                 this.log.info("Got google autocomplete");
-                this.log.debug(job);
-                this.log.debug(results);
                 resolve(new GoogleAutocompleteResponses((<Array<GoogleAutocompleteResponse>>results)));
             })).catch(err => {
                 this.log.error("Can't get google autocomplete");

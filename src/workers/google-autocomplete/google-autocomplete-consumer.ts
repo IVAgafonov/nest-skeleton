@@ -165,9 +165,9 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
 }
 
 export default function (job: Job<GoogleAutocompleteTaskEntity>, done: DoneCallback) {
+    logger.info(`Got task; Keywords count: '${job.data.keywords.length}': pid: ${process.pid}`);
     let response: GoogleAutocompleteResponse[] = [];
     let promises: Promise<any>[] = [];
-    logger.info(`Got task; Keywords count: '${job.data.keywords.length}': pid: ${process.pid}`);
     getBrowser().then(b => {
         job.data.keywords.forEach(keyword => {
             promises.push(getGoogleAutocomplete(b, keyword));
