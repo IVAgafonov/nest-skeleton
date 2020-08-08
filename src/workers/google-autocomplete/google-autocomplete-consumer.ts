@@ -18,12 +18,14 @@ const logger = configure('./config/log4js.json').getLogger('google-autocomplete-
 
 let browser: Browser|null = null;
 
-let profiles: Array<number> = [1];
-
 function getBrowser(): Promise<Browser> {
-    //console.log(browser);
     if (browser && browser.isConnected()) {
         return Promise.resolve(browser);
+    } else {
+        if (browser) {
+            browser.close().then(() => browser = null).catch(e => browser = null);
+            return Promise.reject(new Error('Browser disconnected'));
+        }
     }
 
     return new Promise<Browser>((resolve, reject) => {
@@ -81,16 +83,16 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
         let timeout: Timeout = setTimeout(() => {
             current_page?.close();
             resolve(new GoogleAutocompleteResponse(keyword, []));
-        }, 1000);
+        }, 2000);
 
         b.newPage()
             .then(page => {
                 clearTimeout(timeout);
                 current_page = page;
                 timeout = setTimeout(() => {
-                    current_page?.close();
+                    logger.info("Can't open page.");
                     resolve(new GoogleAutocompleteResponse(keyword, []));
-                }, 1000);
+                }, 2000);
                 return page.goto("https://google.ru", {}).then(() => page)
             })
             .then(page => page.waitForSelector("input[name='btnK']").then(() => {
@@ -98,7 +100,7 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
                 timer_search = setTimeout(() => {
                     logger.info("Search button timeout. Close page.");
                     resolve(new GoogleAutocompleteResponse(keyword, []));
-                }, 1000);
+                }, 2000);
                 return page;
             }))
             .then(page => page.waitForSelector("input[name='q']").then(() => {
@@ -106,7 +108,7 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
                 timer_input_wait = setTimeout(() => {
                     logger.info("Search input timeout. Close page.");
                     resolve(new GoogleAutocompleteResponse(keyword, []));
-                }, 1000);
+                }, 2000);
                 return page;
             }))
             .then(page => page.type("input[name='q']", keyword).then(() => {
@@ -114,7 +116,7 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
                 timer_input = setTimeout(() => {
                     logger.info("Type query timeout. Close page. q: " + keyword + ";");
                     resolve(new GoogleAutocompleteResponse(keyword, []));
-                }, 1000);
+                }, 2000);
                 return page;
             }))
             .then(page => page.click("input[name='q']").then(() => {
@@ -123,7 +125,7 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
                 timer_click = setTimeout(() => {
                     logger.info("Click timeout.");
                     resolve(new GoogleAutocompleteResponse(keyword, []));
-                }, 1000);
+                }, 2000);
                 return page;
             }))
             .then(page => page.waitForSelector(".erkvQe .sbl1 span", {timeout: 5000}).then(() => {
@@ -131,7 +133,7 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
                 timer_autocomplete = setTimeout(() => {
                     logger.info("Result timeout.");
                     resolve(new GoogleAutocompleteResponse(keyword, []));
-                }, 1000);
+                }, 2000);
                 return page;
             }))
             .then(page => page.$$('.erkvQe .sbl1 span'))
@@ -172,7 +174,7 @@ export default function (job: Job<GoogleAutocompleteTaskEntity>, done: DoneCallb
         });
         return Promise.all(promises).then(results => {
             results.forEach(result => response = response.concat(result));
-            //logger.info(response);
+            logger.info("Got response");
             done(null, response);
         });
     }).catch(e => {
