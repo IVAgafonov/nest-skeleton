@@ -3,8 +3,6 @@ FROM node:14.7.0
 RUN apt-get update \
 && apt-get install -y \
    unzip \
-   wget \
-   apt-get \
    gconf-service \
    libasound2 \
    libatk1.0-0 \
