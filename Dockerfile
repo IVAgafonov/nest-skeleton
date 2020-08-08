@@ -8,7 +8,7 @@ RUN chown -R daemon:daemon /opt/docker
 
 COPY --chown=daemon:daemon . /opt/docker
 RUN mkdir -p logs && chown -R daemon:daemon logs
-RUN mkdir -p /tmp/chrome-profiles && chown -R /tmp/chrome-profiles
+RUN mkdir -p /tmp/chrome-profiles && chown -R daemon:daemon /tmp/chrome-profiles
 
 EXPOSE 8050
 
