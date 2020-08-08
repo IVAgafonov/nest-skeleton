@@ -1,4 +1,4 @@
-FROM node:14.7.0-alpine3.12
+FROM node:12.18.3-alpine3.9
 
 WORKDIR /opt/docker
 
