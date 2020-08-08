@@ -56,11 +56,13 @@ export class GoogleController {
     @Metric('google_autocomplete')
     google_autocomplete(@Body() autocomplete_request: GoogleAutocompleteRequest): Promise<GoogleAutocompleteResponses> {
         return new Promise<GoogleAutocompleteResponses>((resolve, reject) => {
-            this.log.error("Create async task google autocomplete");
+            this.log.info("Create async task google autocomplete");
             this.google_autocomplete_queue.add(
                 new GoogleAutocompleteTaskEntity(autocomplete_request.keywords, autocomplete_request.lang)
             ).then(job => job.finished().then(results => {
-                this.log.error("Got google autocomplete");
+                this.log.info("Got google autocomplete");
+                this.log.debug(job);
+                this.log.debug(results);
                 resolve(new GoogleAutocompleteResponses((<Array<GoogleAutocompleteResponse>>results)));
             })).catch(err => {
                 this.log.error("Can't get google autocomplete");
