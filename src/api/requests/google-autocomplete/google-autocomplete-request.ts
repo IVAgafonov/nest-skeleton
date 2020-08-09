@@ -16,4 +16,10 @@ export class GoogleAutocompleteRequest {
         example: 'en_US'
     })
     public lang: string = 'en_US';
+
+    @ApiProperty({
+        type: Number,
+        example: 1
+    })
+    public deep: number = 1;
 }

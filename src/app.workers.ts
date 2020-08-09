@@ -27,7 +27,7 @@ import { join } from 'path';
     imports: [
         DbModule,
         BullModule.registerQueueAsync({ //async process in separated proc
-            name: 'google_autocomplete_task',
+            name: config.get<string>('queues.google_autocomplete_task'),
             imports: [ConfigModule],
             useFactory: async (redisConf: RedisConfig) => ({
                 redis: redisConf,

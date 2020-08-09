@@ -1,29 +1,32 @@
-import {DoneCallback, Job} from 'bull';
+import Bull, {DoneCallback, Job} from 'bull';
 import { configure, Log4js } from 'log4js';
 import {GoogleAutocompleteTaskEntity} from "../../entities/google-autocomplete/google-autocomplete-task-entity";
 //import puppeteer from 'puppeteer'
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import RecaptchaPlugin from 'puppeteer-extra-plugin-recaptcha';
 import {Browser, JSHandle, Page} from "puppeteer";
-import {parseForESLint} from "@typescript-eslint/parser";
 import Timeout = NodeJS.Timeout;
-import {timeout} from "rxjs/operators";
-import {Queue} from "bull";
 import {GoogleAutocompleteResponse} from "../../api/responses/google-autocomplete/google-autocomplete-response";
 import {exec, execSync} from 'child_process';
 const fs = require("fs");
-
+import config from "config";
 const logger = configure('./config/log4js.json').getLogger('google-autocomplete-consumer');
 
 let browser: Browser|null = null;
+let queue = new Bull(config.get<string>('queues.google_autocomplete_task'), {
+    redis: {
+        host: config.get<string>('redis.host'),
+        port: config.get<number>('redis.port'),
+        password: config.get<string>('redis.password')
+    }
+});
 
 function getBrowser(): Promise<Browser> {
     if (browser && browser.isConnected()) {
         return Promise.resolve(browser);
     } else {
         if (browser) {
-            browser.close().then(() => browser = null).catch(e => browser = null);
+            browser = null;
             return Promise.reject(new Error('Browser disconnected'));
         }
     }
@@ -37,7 +40,7 @@ function getBrowser(): Promise<Browser> {
         }, 15000);
 
         if (!fs.existsSync('/tmp/chrome-profiles/' + process.pid)) {
-            execSync("cp -r /tmp/chrome-profiles/1 /tmp/chrome-profiles/" + process.pid);
+            execSync("cp -r /tmp/chrome-profiles/1 /tmp/chrome-profiles/" + process.pid + " || true");
         }
 
         puppeteer
@@ -68,8 +71,8 @@ function getBrowser(): Promise<Browser> {
     });
 }
 
-function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutocompleteResponse> {
-    let result: string[] = [];
+function getGoogleAutocomplete(b: Browser, keyword: string, lang: string, deep = 1): Promise<GoogleAutocompleteResponse[]> {
+    let response: GoogleAutocompleteResponse[] = [];
     let timer_search: Timeout;
     let timer_input: Timeout;
     let timer_input_wait: Timeout;
@@ -82,7 +85,7 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
 
         let timeout: Timeout = setTimeout(() => {
             current_page?.close();
-            resolve(new GoogleAutocompleteResponse(keyword, []));
+            resolve([new GoogleAutocompleteResponse(keyword, [])]);
         }, 2000);
 
         b.newPage()
@@ -91,7 +94,7 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
                 current_page = page;
                 timeout = setTimeout(() => {
                     logger.info("Can't open page.");
-                    resolve(new GoogleAutocompleteResponse(keyword, []));
+                    resolve([new GoogleAutocompleteResponse(keyword, [])]);
                 }, 2000);
                 return page.goto("https://google.ru", {}).then(() => page)
             })
@@ -99,7 +102,7 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
                 clearTimeout(timeout);
                 timer_search = setTimeout(() => {
                     logger.info("Search button timeout. Close page.");
-                    resolve(new GoogleAutocompleteResponse(keyword, []));
+                    resolve([new GoogleAutocompleteResponse(keyword, [])]);
                 }, 2000);
                 return page;
             }))
@@ -107,7 +110,7 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
                 clearTimeout(timer_search);
                 timer_input_wait = setTimeout(() => {
                     logger.info("Search input timeout. Close page.");
-                    resolve(new GoogleAutocompleteResponse(keyword, []));
+                    resolve([new GoogleAutocompleteResponse(keyword, [])]);
                 }, 2000);
                 return page;
             }))
@@ -115,7 +118,7 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
                 clearTimeout(timer_input_wait);
                 timer_input = setTimeout(() => {
                     logger.info("Type query timeout. Close page. q: " + keyword + ";");
-                    resolve(new GoogleAutocompleteResponse(keyword, []));
+                    resolve([new GoogleAutocompleteResponse(keyword, [])]);
                 }, 2000);
                 return page;
             }))
@@ -124,7 +127,7 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
                 clearTimeout(timer_input);
                 timer_click = setTimeout(() => {
                     logger.info("Click timeout.");
-                    resolve(new GoogleAutocompleteResponse(keyword, []));
+                    resolve([new GoogleAutocompleteResponse(keyword, [])]);
                 }, 2000);
                 return page;
             }))
@@ -132,7 +135,7 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
                 clearTimeout(timer_click);
                 timer_autocomplete = setTimeout(() => {
                     logger.info("Result timeout.");
-                    resolve(new GoogleAutocompleteResponse(keyword, []));
+                    resolve([new GoogleAutocompleteResponse(keyword, [])]);
                 }, 2000);
                 return page;
             }))
@@ -141,17 +144,44 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
             .then(innerElements => Promise.all(innerElements.map(innerElement => innerElement.jsonValue())))
             .then(values => {
                 clearTimeout(timer_autocomplete);
+                let autocomplete_list: string[] = [];
                 values.forEach(value => {
                     let autocomplete = (<string>value).replace(/<[^>]+>/gi, '').replace(/\s+/g, ' ');
-                    result.push(autocomplete);
+                    autocomplete_list.push(autocomplete);
                 });
                 logger.info("Resolve result.");
                 //logger.info(result);
                 if (current_page) {
                     current_page.close().catch(e => logger.error(e))
                 }
-                resolve(new GoogleAutocompleteResponse(keyword, result));
-                return Promise.resolve();
+                response.push(new GoogleAutocompleteResponse(keyword, autocomplete_list));
+                let promises_next: Promise<GoogleAutocompleteResponse[]>[] = [];
+                let jobPromises: Promise<any>[] = [];
+                let resultPromises: Promise<any>[] = [];
+                if (--deep < 1 || autocomplete_list.length == 0) {
+                    resolve(response);
+                } else {
+                    for (let i = 0; i < autocomplete_list.length; i++) {
+                        if (i > 3) {
+                            break;
+                        }
+                        jobPromises.push(queue.add(new GoogleAutocompleteTaskEntity(autocomplete_list[i], lang, deep)));
+                    }
+                    Promise.all(jobPromises).then(jobs => {
+                        jobs.forEach(job => {
+                            resultPromises.push(job.finished());
+                        });
+                        Promise.all(resultPromises).then(results => {
+                            results.forEach(result => {
+                                response = response.concat(result);
+                            });
+                            resolve(response);
+                        })
+                    }).catch((e) => {
+                        logger.error(e);
+                        resolve(response)
+                    });
+                }
             })
             .catch(err => {
                 logger.error("Cat't get result.");
@@ -159,24 +189,27 @@ function getGoogleAutocomplete(b: Browser, keyword: string): Promise<GoogleAutoc
                 if (current_page) {
                     current_page.close().catch(e => logger.error(e));
                 }
-                resolve(new GoogleAutocompleteResponse(keyword, []));
+                resolve([new GoogleAutocompleteResponse(keyword, [])]);
             });
     });
 }
 
 export default function (job: Job<GoogleAutocompleteTaskEntity>, done: DoneCallback) {
-    logger.info(`Got task; Keywords count: '${job.data.keywords.length}': pid: ${process.pid}`);
+    logger.info(`Got task; Keywords count: '${job.data.keyword}'; deep: ${job.data.deep}; pid: ${process.pid}`);
     let response: GoogleAutocompleteResponse[] = [];
     let promises: Promise<any>[] = [];
+    if (job.data.deep > 3) {
+        job.data.deep = 3;
+    }
+    if (job.data.deep < 1) {
+        job.data.deep = 1;
+    }
+
     getBrowser().then(b => {
-        job.data.keywords.forEach(keyword => {
-            promises.push(getGoogleAutocomplete(b, keyword));
-        });
-        return Promise.all(promises).then(results => {
-            results.forEach(result => response = response.concat(result));
-            logger.info("Got response");
-            done(null, response);
-        });
+        return getGoogleAutocomplete(b, job.data.keyword, job.data.lang, job.data.deep);
+    }).then(result => {
+        logger.debug(result);
+        done(null, result);
     }).catch(e => {
         logger.error(e);
         done(null, response);

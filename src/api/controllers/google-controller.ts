@@ -33,6 +33,7 @@ import {GoogleAutocompleteTaskEntity} from "../../entities/google-autocomplete/g
 import {GoogleAutocompleteResponses} from "../responses/google-autocomplete/google-autocomplete-responses";
 import {GoogleAutocompleteRequest} from "../requests/google-autocomplete/google-autocomplete-request";
 import {GoogleAutocompleteResponse} from "../responses/google-autocomplete/google-autocomplete-response";
+import config from "config";
 
 @Controller('api/google')
 @ApiTags('google')
@@ -40,7 +41,7 @@ export class GoogleController {
 
     log = getLogger(this.constructor.name);
 
-    constructor(@InjectQueue('google_autocomplete_task') private google_autocomplete_queue: Queue) {
+    constructor(@InjectQueue(config.get<string>('queues.google_autocomplete_task')) private google_autocomplete_queue: Queue) {
     }
 
     @Post('google_autocomplete')
@@ -57,14 +58,24 @@ export class GoogleController {
     google_autocomplete(@Body() autocomplete_request: GoogleAutocompleteRequest): Promise<GoogleAutocompleteResponses> {
         return new Promise<GoogleAutocompleteResponses>((resolve, reject) => {
             this.log.info("Create async task google autocomplete");
-            this.google_autocomplete_queue.add(
-                new GoogleAutocompleteTaskEntity(autocomplete_request.keywords, autocomplete_request.lang)
-            ).then(job => job.finished().then(results => {
-                this.log.info("Got google autocomplete");
-                resolve(new GoogleAutocompleteResponses((<Array<GoogleAutocompleteResponse>>results)));
-            })).catch(err => {
-                this.log.error("Can't get google autocomplete");
-                reject(err);
+            let jobPromises: Promise<any>[] = [];
+            let resultPromises: Promise<any>[] = [];
+            let responses: GoogleAutocompleteResponse[] = [];
+            autocomplete_request.keywords.forEach((keyword) => {
+                jobPromises.push(this.google_autocomplete_queue.add(
+                    new GoogleAutocompleteTaskEntity(keyword, autocomplete_request.lang, autocomplete_request.deep)
+                ));
+            });
+            Promise.all(jobPromises).then(jobs => {
+                jobs.forEach(job => {
+                    resultPromises.push(job.finished());
+                });
+                Promise.all(resultPromises).then(results => {
+                    results.forEach(result => {
+                        responses = responses.concat(result);
+                    });
+                    resolve(new GoogleAutocompleteResponses((<Array<GoogleAutocompleteResponse>>responses)));
+                });
             });
         });
     }
