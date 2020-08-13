@@ -55,6 +55,9 @@ import { join } from 'path';
                         (process.env.NODE_ENV === 'development' ? 'ts' : 'js')),
                     concurrency: 3
                 } ],
+                settings: {
+                    drainDelay: 0.3
+                }
             }),
             inject: [REDIS_MAIN_CONF]
         }),

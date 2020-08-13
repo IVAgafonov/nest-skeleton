@@ -85,18 +85,19 @@ function getGoogleAutocomplete(b: Browser, keyword: string, lang: string, deep =
 
         let timeout: Timeout = setTimeout(() => {
             current_page?.close();
+            logger.info("Can't open page.");
             resolve([new GoogleAutocompleteResponse(keyword, [])]);
-        }, 2000);
+        }, 3000);
 
         b.newPage()
             .then(page => {
                 clearTimeout(timeout);
                 current_page = page;
                 timeout = setTimeout(() => {
-                    logger.info("Can't open page.");
+                    logger.info("Can't open google.com.");
                     resolve([new GoogleAutocompleteResponse(keyword, [])]);
                 }, 2000);
-                return page.goto("https://google.ru", {}).then(() => page)
+                return page.goto("https://google.com", {}).then(() => page)
             })
             .then(page => page.waitForSelector("input[name='btnK']").then(() => {
                 clearTimeout(timeout);
