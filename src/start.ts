@@ -14,6 +14,7 @@ async function bootstrap() {
     app.use(bodyParser.urlencoded({extended: true}));
     //app.useLogger(app.get(Log4jsService));
     app.useGlobalPipes(new ValidationPipe());
+    app.enableCors();
 
     app.disable('x-powered-by');
     app.disable('etag');
