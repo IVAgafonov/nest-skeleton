@@ -62,6 +62,9 @@ export class TelegramControllerService {
     public getLock(locker: string): Promise<string> {
         return new Promise<string>(resolve => {
             this.redis.get(this.prefix + locker, (err, r) => {
+                this.redis.ttl(this.prefix + locker, (err, ttl) => {
+                    console.log('Expire ' + locker + ': ' + ttl);
+                });
                 resolve(r ? r : LC_NOT_EXISTS);
             });
         });

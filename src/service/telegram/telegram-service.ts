@@ -17,9 +17,9 @@ export class TelegramService {
                 '/sendMessage?chat_id=' + r +'&text=' + message +
                 (reply_markup ? ('&reply_markup=' + JSON.stringify(reply_markup)) : '')
             ).then(r => {
-                console.log(r);
+                //console.log(r);
             }).catch(err => {
-                console.log(err);
+                //console.log(err);
             });
         });
     }
