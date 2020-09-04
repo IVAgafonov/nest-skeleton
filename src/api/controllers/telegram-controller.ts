@@ -38,6 +38,7 @@ import {MessageResponse} from "../responses/system/message-response";
 import {TelegramService} from "../../service/telegram/telegram-service";
 import {TelegramControllerService} from "../../service/telegram/telegram-controller-service";
 import { Request } from 'express';
+import {TelegramCallback} from "../requests/telegram/telegram-callback";
 
 @Controller('api/telegram')
 @ApiTags('telegram')
@@ -76,12 +77,8 @@ export class TelegramController {
     //@Roles(UserGroup.USER, UserGroup.ADMIN)
     @HttpCode(200)
     @Metric('controller_callback')
-    controller_callback(@Req() req: Request): Promise<MessageResponse> {
-        //this.s.alert('Test');
-        console.log(req);
-        console.log(req.params);
-        console.log(req.query);
-        console.log(req.body)
+    controller_callback(@Body() callback: TelegramCallback): Promise<MessageResponse> {
+        console.log(callback);
         return Promise.resolve(new MessageResponse('Processed'));
     }
 }
