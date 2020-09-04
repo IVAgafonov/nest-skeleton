@@ -27,6 +27,12 @@ import {AuthorizedRequest} from "../requests/authorized-request";
 import {Roles} from "../guards/role-guard";
 import {Metric, PrometheusService} from "../../service/prometheus/prometheus-service";
 import {MessageResponse} from "../responses/system/message-response";
+import {
+    AUTH_CONTROLLER_LOCKER,
+    LC_LOCKED, LC_NOT_EXISTS, LC_UNLOCKED,
+    TelegramControllerService
+} from "../../service/telegram/telegram-controller-service";
+import {TooManyRequestsException} from "../responses/errors/too-many-requests-exception";
 
 @Controller('api/user')
 @ApiTags("user")
@@ -34,7 +40,7 @@ export class UserController {
 
     log = getLogger(this.constructor.name);
 
-    constructor(private userService: UserService) {
+    constructor(private userService: UserService, private telegramControllerService: TelegramControllerService) {
     }
 
     @ApiOperation({
@@ -95,32 +101,51 @@ export class UserController {
     @Metric('auth_user')
     auth_user(@Body(AuthUserValidator) userAuthRequest: UserAuthRequest): Observable<UserAuthResponse> {
         return new Observable<UserAuthResponse>(s => {
-            this.userService.getUserByEmail(userAuthRequest.email).subscribe((userEntity:UserEntity) => {
-                if (this.userService.passwordsEqual(userEntity.password, userAuthRequest.password)) {
-                    this.userService.authUserById(userEntity.id, userAuthRequest.type).subscribe((authEntity: AuthEntity) => {
-                        s.next(UserAuthResponse.createFromEntity(authEntity));
-                        s.complete();
-                    }, err => {
-                        this.log.info("User " + userAuthRequest.email + " auth error");
-                        s.error(new InternalErrorException("Can't auth user"));
-                        s.complete();
-                    });
-                } else {
-                    this.log.info("User " + userAuthRequest.email + " has entered invalid password");
-                    s.error(new ValidateFieldExceptions([
-                        new ValidateFieldException('password', 'Invalid password')
-                    ]));
+            this.telegramControllerService.getLock(AUTH_CONTROLLER_LOCKER).then(lock => {
+                console.log(lock);
+                if (lock === LC_LOCKED) {
+                    s.error(new TooManyRequestsException("Locked"));
                     s.complete();
+                    return;
                 }
-            }, err => {
-                this.log.info("User " + userAuthRequest.email + " does not exist");
-                s.error(new ValidateFieldExceptions([
-                    new ValidateFieldException('email', 'User does not exist')
-                ]));
-                s.complete();
-            }, () => {
-                this.log.info("User " + userAuthRequest.email + " has successfully logged in");
-            });
+                this.userService.getRecentlyAuthCount().then(count => {
+                    console.log('count: ' + count);
+                    if (count > 5 && lock === LC_NOT_EXISTS) {
+                        this.telegramControllerService.preLock(AUTH_CONTROLLER_LOCKER).then(e => e);
+                        this.telegramControllerService.alert(AUTH_CONTROLLER_LOCKER).then(e => e);
+                        s.error(new TooManyRequestsException("Got locked"));
+                        s.complete();
+                        return;
+                    } else {
+                        this.userService.getUserByEmail(userAuthRequest.email).subscribe((userEntity:UserEntity) => {
+                            if (this.userService.passwordsEqual(userEntity.password, userAuthRequest.password)) {
+                                this.userService.authUserById(userEntity.id, userAuthRequest.type).subscribe((authEntity: AuthEntity) => {
+                                    s.next(UserAuthResponse.createFromEntity(authEntity));
+                                    s.complete();
+                                }, err => {
+                                    this.log.info("User " + userAuthRequest.email + " auth error");
+                                    s.error(new InternalErrorException("Can't auth user"));
+                                    s.complete();
+                                });
+                            } else {
+                                this.log.info("User " + userAuthRequest.email + " has entered invalid password");
+                                s.error(new ValidateFieldExceptions([
+                                    new ValidateFieldException('password', 'Invalid password')
+                                ]));
+                                s.complete();
+                            }
+                        }, err => {
+                            this.log.info("User " + userAuthRequest.email + " does not exist");
+                            s.error(new ValidateFieldExceptions([
+                                new ValidateFieldException('email', 'User does not exist')
+                            ]));
+                            s.complete();
+                        }, () => {
+                            this.log.info("User " + userAuthRequest.email + " has successfully logged in");
+                        });
+                    }
+                });
+            })
         });
     }
 

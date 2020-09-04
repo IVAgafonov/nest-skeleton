@@ -107,6 +107,19 @@ export class UserService {
         });
     }
 
+    getRecentlyAuthCount(): Promise<number> {
+        const create_date = Math.round(+ new Date() / 1000) - 60 * 15;
+        return new Promise<number>(resolve => {
+            return this.conn.query(
+                "SELECT count(*) as count FROM app_users_auth_tokens  " +
+                "WHERE create_date > FROM_UNIXTIME(?)", [
+                    create_date,
+                ]).then(res => {
+                    resolve(+res[0].count);
+            });
+        });
+    }
+
     authUserById(user_id: number, type: AuthTokenType = AuthTokenType.TEMPORARY): Observable<AuthEntity> {
         const token = this.cryptoService.hashPassword(user_id + type + Math.random() + new Date());
         const create_date = Math.round(+ new Date() / 1000);

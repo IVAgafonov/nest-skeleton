@@ -8,9 +8,11 @@ import {RedisClient} from "redis";
 import {ControllerLock} from "../../entities/controller-lock/controller-lock";
 
 export const REGISTER_CONTROLLER_LOCKER = 'REGISTER_CONTROLLER_LOCKER';
+export const AUTH_CONTROLLER_LOCKER = 'AUTH_CONTROLLER_LOCKER';
 
-const LOCKED = 'LOCKED';
-const UNLOCKED = 'UNLOCKED';
+export const LC_NOT_EXISTS = 'LC_NOT_EXISTS';
+export const LC_LOCKED = 'LC_LOCKED';
+export const LC_UNLOCKED = 'LC_UNLOCKED';
 
 const LOCK = 'LOCK';
 const IGNORE = 'IGNORE';
@@ -27,30 +29,24 @@ export class TelegramControllerService {
             ignoreTime: 300,
             message: 'Too many register'
         } as ControllerLock;
+        this.config[AUTH_CONTROLLER_LOCKER] = {
+            preLockTime: 30,
+            lockTime: 300,
+            ignoreTime: 300,
+            message: 'Too many auths'
+        } as ControllerLock;
     }
 
     public preLock(locker: string): Promise<boolean> {
         return new Promise<boolean>(resolve => {
-            this.redis.set(this.prefix + locker, LOCKED, 'NX', this.config[REGISTER_CONTROLLER_LOCKER].preLockTime || 60, () => resolve(true));
+            this.redis.set(this.prefix + locker, LC_LOCKED, 'EX', this.config[locker].preLockTime, () => resolve(true));
         });
     }
 
     public lock(locker: string): Promise<boolean> {
         return new Promise<boolean>(resolve => {
-            this.redis.set(this.prefix + locker, LOCKED, this.config[REGISTER_CONTROLLER_LOCKER].lockTime || 60, () => resolve(true));
+            this.redis.set(this.prefix + locker, LC_LOCKED, 'EX', this.config[locker].lockTime, () => resolve(true));
         })
-    }
-
-    public isLocked(locker: string): Promise<boolean> {
-        return new Promise<boolean>(resolve => {
-            this.redis.get(this.prefix + locker, (err, r) => {
-                if (!r || r === UNLOCKED) {
-                    resolve(false);
-                } else {
-                    resolve(true);
-                }
-            });
-        });
     }
 
     public release(locker: string): Promise<boolean> {
@@ -61,13 +57,21 @@ export class TelegramControllerService {
 
     public ignore(locker: string): Promise<boolean> {
         return new Promise<boolean>(resolve => {
-            this.redis.set(this.prefix + locker, UNLOCKED, this.config[REGISTER_CONTROLLER_LOCKER].ignoreTime || 60, () => resolve(true));
+            this.redis.set(this.prefix + locker, LC_UNLOCKED, 'EX', this.config[locker].ignoreTime, () => resolve(true));
+        });
+    }
+
+    public getLock(locker: string): Promise<string> {
+        return new Promise<string>(resolve => {
+            this.redis.get(this.prefix + locker, (err, r) => {
+                resolve(r ? r : LC_NOT_EXISTS);
+            });
         });
     }
 
     public alert(locker: string): Promise<boolean> {
         return new Promise<boolean>(resolve => {
-            this.telegram.sendMessage(this.config[REGISTER_CONTROLLER_LOCKER].message, {
+            this.telegram.sendMessage(this.config[locker].message, {
                 inline_keyboard: [
                     [
                         {
@@ -82,6 +86,5 @@ export class TelegramControllerService {
                 ]
             });
         });
-        return Promise.resolve(true);
     }
 }
