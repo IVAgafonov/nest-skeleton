@@ -18,12 +18,16 @@ import {GoogleController} from "./api/controllers/google-controller";
 import {LoggerService} from "./service/logger/logger-service";
 import {doc} from "prettier";
 import { join } from 'path';
+import {TelegramController} from "./api/controllers/telegram-controller";
+import {TelegramService} from "./service/telegram/telegram-service";
+import {TelegramControllerService} from "./service/telegram/telegram-controller-service";
 
 @Module({
     controllers: [
         UserController,
         PrometheusController,
-        GoogleController
+        GoogleController,
+        TelegramController
     ],
     providers: [{
         provide: APP_FILTER,
@@ -40,6 +44,12 @@ import { join } from 'path';
     }, {
         provide: LoggerService,
         useClass: LoggerService
+    }, {
+        provide: TelegramService,
+        useClass: TelegramService,
+    }, {
+        provide: TelegramControllerService,
+        useClass: TelegramControllerService
     }//,
         //AsyncTaskConsumer //async process in same proc
     ],

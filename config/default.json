@@ -20,5 +20,11 @@
   },
   "crypto": {
     "salt": "any-salt"
+  },
+  "telegram-bot": {
+    "token": "token",
+    "recipients": [
+      123
+    ]
   }
 }

@@ -22,7 +22,6 @@ export class PrometheusController {
     @ApiOkResponse({description: 'OK', type: Object})
     @Header('Content-type', 'application/json')
     stat() {
-
         return PrometheusService.toJson();
     }
 }
