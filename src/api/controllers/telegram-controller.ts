@@ -54,13 +54,14 @@ export class TelegramController {
     @ApiBadRequestResponse({description: "Error", type: ValidateFieldExceptions})
     @ApiInternalServerErrorResponse({description: "Error", type: InternalErrorException})
     @Header('Content-type', 'application/json')
-    @ApiBearerAuth()
-    @UseGuards(RoleGuard)
-    @Roles(UserGroup.USER, UserGroup.ADMIN)
+    //@ApiBearerAuth()
+    //@UseGuards(RoleGuard)
+    //@Roles(UserGroup.USER, UserGroup.ADMIN)
     @HttpCode(200)
     @Metric('get_greeting')
     get_greeting(): Promise<MessageResponse> {
-        this.telegram.sendMessage('Hello!');
+        //this.telegram.sendMessage('Hello!');
+        this.s.alert('Test');
         return Promise.resolve(new MessageResponse('Complete!'));
     }
 
@@ -77,8 +78,10 @@ export class TelegramController {
     @Metric('controller_callback')
     controller_callback(@Req() req: Request): Promise<MessageResponse> {
         //this.s.alert('Test');
+        console.log(req);
         console.log(req.params);
         console.log(req.query);
+        console.log(req.body)
         return Promise.resolve(new MessageResponse('Processed'));
     }
 }
