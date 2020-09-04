@@ -17,9 +17,9 @@ export class TelegramService {
                 '/sendMessage?chat_id=' + r +'&text=' + message +
                 (reply_markup ? ('&reply_markup=' + JSON.stringify(reply_markup)) : '')
             ).then(r => {
-                //console.log(r);
+                console.log(r);
             }).catch(err => {
-                //console.log(err);
+                console.log(err);
             });
         });
     }
@@ -31,9 +31,9 @@ export class TelegramService {
                 this.config.token +
                 '/deleteMessage?chat_id=' + r + '&message_id=' + message_id
             ).then(r => {
-                //console.log(r);
+                console.log(r);
             }).catch(err => {
-                //console.log(err);
+                console.log(err);
             });
         });
     }
