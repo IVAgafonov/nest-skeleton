@@ -64,7 +64,7 @@ export class TelegramController {
         return Promise.resolve(new MessageResponse('Complete!'));
     }
 
-    @Get('controller_callback')
+    @Post('controller_callback')
     @ApiOkResponse({description: 'OK', type: MessageResponse})
     @ApiBadRequestResponse({description: "Error", type: BadRequestException})
     @ApiBadRequestResponse({description: "Error", type: ValidateFieldExceptions})
