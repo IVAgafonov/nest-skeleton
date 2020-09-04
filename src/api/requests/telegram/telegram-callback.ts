@@ -13,19 +13,13 @@ export class TelegramMessage {
     public message_id: number = 1;
 }
 
-export class TelegramCallback {
+export class TelegramCallbackQuery {
 
     @ApiProperty({
         type: Number,
         example: 1
     })
-    public update_id: number = 1;
-
-    @ApiProperty({
-        type: String,
-        example: 'IGNORE'
-    })
-    public data: string = 'IGNORE';
+    public id: number = 1;
 
     @ApiProperty({
         type: Object,
@@ -47,4 +41,24 @@ export class TelegramCallback {
         }
     })
     public message: TelegramMessage = new TelegramMessage();
+
+    @ApiProperty({
+        type: String,
+        example: 'IGNORE'
+    })
+    public data: string = 'IGNORE';
+}
+
+export class TelegramCallback {
+
+    @ApiProperty({
+        type: Number,
+        example: 1
+    })
+    public update_id: number = 1;
+
+    @ApiProperty({
+        type: TelegramCallbackQuery
+    })
+    public callback_query: TelegramCallbackQuery = new TelegramCallbackQuery();
 }

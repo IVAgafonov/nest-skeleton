@@ -6,16 +6,14 @@ import {TelegramService} from "./telegram-service";
 import {REDIS_MAIN_CONN} from "../../providers/db/db.providers";
 import {RedisClient} from "redis";
 import {ControllerLock} from "../../entities/controller-lock/controller-lock";
+import {LOCKED} from "http-status-codes";
 
 export const REGISTER_CONTROLLER_LOCKER = 'REGISTER_CONTROLLER_LOCKER';
 export const AUTH_CONTROLLER_LOCKER = 'AUTH_CONTROLLER_LOCKER';
 
 export const LC_NOT_EXISTS = 'LC_NOT_EXISTS';
 export const LC_LOCKED = 'LC_LOCKED';
-export const LC_UNLOCKED = 'LC_UNLOCKED';
-
-const LOCK = 'LOCK';
-const IGNORE = 'IGNORE';
+export const LC_IGNORE = 'LC_IGNORE';
 
 @Injectable()
 export class TelegramControllerService {
@@ -57,7 +55,7 @@ export class TelegramControllerService {
 
     public ignore(locker: string): Promise<boolean> {
         return new Promise<boolean>(resolve => {
-            this.redis.set(this.prefix + locker, LC_UNLOCKED, 'EX', this.config[locker].ignoreTime, () => resolve(true));
+            this.redis.set(this.prefix + locker, LC_IGNORE, 'EX', this.config[locker].ignoreTime, () => resolve(true));
         });
     }
 
@@ -76,11 +74,11 @@ export class TelegramControllerService {
                     [
                         {
                             text: "Lock",
-                            callback_data: LOCK
+                            callback_data: LC_LOCKED
                         },
                         {
                             text: "Ignore",
-                            callback_data: IGNORE
+                            callback_data: LC_IGNORE
                         }
                     ]
                 ]

@@ -36,7 +36,12 @@ import {GoogleAutocompleteResponse} from "../responses/google-autocomplete/googl
 import config from "config";
 import {MessageResponse} from "../responses/system/message-response";
 import {TelegramService} from "../../service/telegram/telegram-service";
-import {TelegramControllerService} from "../../service/telegram/telegram-controller-service";
+import {
+    AUTH_CONTROLLER_LOCKER,
+    LC_IGNORE,
+    LC_LOCKED,
+    TelegramControllerService
+} from "../../service/telegram/telegram-controller-service";
 import { Request } from 'express';
 import {TelegramCallback} from "../requests/telegram/telegram-callback";
 
@@ -79,6 +84,20 @@ export class TelegramController {
     @Metric('controller_callback')
     controller_callback(@Body() callback: TelegramCallback): Promise<MessageResponse> {
         console.log(callback);
+
+        this.telegram.deleteMessage(callback.callback_query.message.message_id)
+
+        switch (callback.callback_query.data) {
+            case LC_LOCKED:
+                this.s.lock(AUTH_CONTROLLER_LOCKER);
+                break;
+            case LC_IGNORE:
+                this.s.ignore(AUTH_CONTROLLER_LOCKER);
+                break;
+        }
+
+        this.telegram.sendMessage('User: ' + callback.callback_query.from.username + ' ' + callback.callback_query.data + ' auth');
+
         return Promise.resolve(new MessageResponse('Processed'));
     }
 }

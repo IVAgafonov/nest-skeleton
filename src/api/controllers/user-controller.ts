@@ -29,7 +29,7 @@ import {Metric, PrometheusService} from "../../service/prometheus/prometheus-ser
 import {MessageResponse} from "../responses/system/message-response";
 import {
     AUTH_CONTROLLER_LOCKER,
-    LC_LOCKED, LC_NOT_EXISTS, LC_UNLOCKED,
+    LC_LOCKED, LC_NOT_EXISTS, LC_IGNORE,
     TelegramControllerService
 } from "../../service/telegram/telegram-controller-service";
 import {TooManyRequestsException} from "../responses/errors/too-many-requests-exception";
