@@ -1,4 +1,4 @@
-import {Controller, Get, Header} from "@nestjs/common";
+import {Controller, Get, Header, HttpCode} from "@nestjs/common";
 import {
     ApiOkResponse,
     ApiTags
@@ -14,6 +14,7 @@ export class PrometheusController {
     @Get('metrics')
     @ApiOkResponse({description: 'OK', type: String})
     @Header('Content-type', 'text/plain')
+    @HttpCode(200)
     metrics() {
         return PrometheusService.toPrometheus();
     }
@@ -21,6 +22,7 @@ export class PrometheusController {
     @Get('stat')
     @ApiOkResponse({description: 'OK', type: Object})
     @Header('Content-type', 'application/json')
+    @HttpCode(200)
     stat() {
         return PrometheusService.toJson();
     }

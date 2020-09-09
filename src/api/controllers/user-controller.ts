@@ -161,6 +161,7 @@ export class UserController {
     @ApiBearerAuth()
     @UseGuards(RoleGuard)
     @Roles(UserGroup.USER, UserGroup.ADMIN)
+    @HttpCode(200)
     @Metric('logout_user')
     logout_user(@Req() req: AuthorizedRequest): Observable<MessageResponse> {
         return new Observable<MessageResponse>(s => {
@@ -186,6 +187,7 @@ export class UserController {
     @ApiBearerAuth()
     @UseGuards(RoleGuard)
     @Roles(UserGroup.USER, UserGroup.ADMIN)
+    @HttpCode(200)
     @Metric('logout_all_user')
     logout_all_user(@Req() req: AuthorizedRequest): Observable<MessageResponse> {
         return new Observable<MessageResponse>(s => {
@@ -212,6 +214,7 @@ export class UserController {
     @ApiBearerAuth()
     @UseGuards(RoleGuard)
     @Roles(UserGroup.USER, UserGroup.ADMIN)
+    @HttpCode(200)
     @Metric('get_user')
     get_user(@Req() req: AuthorizedRequest): UserResponse {
         return UserResponse.createFromEntity(<UserEntity>(req.user));

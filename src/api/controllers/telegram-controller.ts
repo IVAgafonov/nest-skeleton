@@ -42,7 +42,7 @@ import {
     LC_LOCKED,
     TelegramControllerService
 } from "../../service/telegram/telegram-controller-service";
-import { Request } from 'express';
+import axios from "axios";
 import {TelegramCallback} from "../requests/telegram/telegram-callback";
 
 @Controller('api/telegram')
@@ -60,13 +60,9 @@ export class TelegramController {
     @ApiBadRequestResponse({description: "Error", type: ValidateFieldExceptions})
     @ApiInternalServerErrorResponse({description: "Error", type: InternalErrorException})
     @Header('Content-type', 'application/json')
-    //@ApiBearerAuth()
-    //@UseGuards(RoleGuard)
-    //@Roles(UserGroup.USER, UserGroup.ADMIN)
     @HttpCode(200)
     @Metric('get_greeting')
     get_greeting(): Promise<MessageResponse> {
-        //this.telegram.sendMessage('Hello!');
         this.s.alert('Test');
         return Promise.resolve(new MessageResponse('Complete!'));
     }
@@ -77,9 +73,6 @@ export class TelegramController {
     @ApiBadRequestResponse({description: "Error", type: ValidateFieldExceptions})
     @ApiInternalServerErrorResponse({description: "Error", type: InternalErrorException})
     @Header('Content-type', 'application/json')
-    //@ApiBearerAuth()
-    //@UseGuards(RoleGuard)
-    //@Roles(UserGroup.USER, UserGroup.ADMIN)
     @HttpCode(200)
     @Metric('controller_callback')
     controller_callback(@Body() callback: TelegramCallback): Promise<MessageResponse> {
@@ -99,5 +92,19 @@ export class TelegramController {
         this.telegram.sendMessage('User: ' + callback.callback_query.from.username + ' ' + callback.callback_query.data + ' auth');
 
         return Promise.resolve(new MessageResponse('Processed'));
+    }
+
+    @Get('get_my_ip')
+    @ApiOkResponse({description: 'OK', type: MessageResponse})
+    @ApiBadRequestResponse({description: "Error", type: BadRequestException})
+    @ApiBadRequestResponse({description: "Error", type: ValidateFieldExceptions})
+    @ApiInternalServerErrorResponse({description: "Error", type: InternalErrorException})
+    @Header('Content-type', 'application/json')
+    @HttpCode(200)
+    @Metric('get_my_ip')
+    get_my_ip(): Promise<MessageResponse> {
+        return new Promise<MessageResponse>(resolve => {
+            axios.get('https://ifconfig.co/ip').then(r => resolve(new MessageResponse(r.data)));
+        });
     }
 }
