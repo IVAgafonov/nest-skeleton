@@ -43,6 +43,7 @@ import {
     TelegramControllerService
 } from "../../service/telegram/telegram-controller-service";
 import axios from "axios";
+import os from "os";
 import {TelegramCallback} from "../requests/telegram/telegram-callback";
 
 @Controller('api/telegram')
@@ -104,7 +105,7 @@ export class TelegramController {
     @Metric('get_my_ip')
     get_my_ip(): Promise<MessageResponse> {
         return new Promise<MessageResponse>(resolve => {
-            axios.get('https://ifconfig.co/ip').then(r => resolve(new MessageResponse(r.data)));
+            axios.get('https://ifconfig.co/ip').then(r => resolve(new MessageResponse(r.data)) + JSON.stringify(os.networkInterfaces()));
         });
     }
 }
