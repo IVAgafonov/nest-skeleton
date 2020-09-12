@@ -105,7 +105,8 @@ export class TelegramController {
     @Metric('get_my_ip')
     get_my_ip(): Promise<MessageResponse> {
         return new Promise<MessageResponse>(resolve => {
-            axios.get('https://ifconfig.co/ip').then(r => resolve(new MessageResponse(r.data)) + JSON.stringify(os.networkInterfaces()));
+            console.log(os.networkInterfaces());
+            axios.get('https://ifconfig.co/ip').then(r => resolve(new MessageResponse(r.data  + JSON.stringify(os.networkInterfaces()))));
         });
     }
 }
