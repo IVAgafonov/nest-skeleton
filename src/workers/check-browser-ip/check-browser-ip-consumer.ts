@@ -74,6 +74,7 @@ export default function (job: Job<any>, done: DoneCallback) {
                 .then(page => page.goto('https://ifconfig.co/ip').then(() => page))
                 .then(page => page.content().then(c => {
                     logger.debug(`Pid: ${process.pid}; ip: ${c}`);
+                    page.close();
                     done(null, c.replace(/<[^>]*>/gi, '').trim());
                 }));
         })

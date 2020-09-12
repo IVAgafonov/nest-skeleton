@@ -136,7 +136,9 @@ export class TelegramController {
     get_browser_ip(): Promise<MessageResponse> {
         return new Promise<MessageResponse>((resolve, reject) => {
             this.log.info("Check browser ip");
-            this.check_browser_ip.add({act: 'check'}).then(job => job.finished().then(r => resolve(new MessageResponse(r))));
+            for (let i = 0; i < 6; i++) {
+                this.check_browser_ip.add({act: 'check'}).then(job => job.finished().then(r => resolve(new MessageResponse(r))));
+            }
         });
     }
 }
