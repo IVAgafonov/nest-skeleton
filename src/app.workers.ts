@@ -27,6 +27,21 @@ import { join } from 'path';
     imports: [
         DbModule,
         BullModule.registerQueueAsync({ //async process in separated proc
+            name: config.get<string>('queues.check_browser_ip'),
+            imports: [ConfigModule],
+            useFactory: async (redisConf: RedisConfig) => ({
+                redis: redisConf,
+                processors: [ {
+                    path: join(__dirname, 'workers/check-browser-ip/check-browser-ip-consumer.' +
+                        (process.env.NODE_ENV === 'development' ? 'ts' : 'js')),
+                    concurrency: 3
+                } ],
+                settings: {
+                    drainDelay: 0.3
+                }
+            }),
+            inject: [REDIS_MAIN_CONF]
+        }, { //async process in separated proc
             name: config.get<string>('queues.google_autocomplete_task'),
             imports: [ConfigModule],
             useFactory: async (redisConf: RedisConfig) => ({

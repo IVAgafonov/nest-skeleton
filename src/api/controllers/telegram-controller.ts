@@ -52,7 +52,10 @@ export class TelegramController {
 
     log = getLogger(this.constructor.name);
 
-    constructor(private telegram: TelegramService, private s: TelegramControllerService) {
+    constructor(
+        private telegram: TelegramService,
+        private s: TelegramControllerService,
+        @InjectQueue(config.get<string>('queues.check_browser_ip')) private check_browser_ip: Queue) {
     }
 
     @Get('get_greeting')
@@ -95,6 +98,18 @@ export class TelegramController {
         return Promise.resolve(new MessageResponse('Processed'));
     }
 
+    @Get('get_my_ips')
+    @ApiOkResponse({description: 'OK', type: MessageResponse})
+    @ApiBadRequestResponse({description: "Error", type: BadRequestException})
+    @ApiBadRequestResponse({description: "Error", type: ValidateFieldExceptions})
+    @ApiInternalServerErrorResponse({description: "Error", type: InternalErrorException})
+    @Header('Content-type', 'application/json')
+    @HttpCode(200)
+    @Metric('get_my_ips')
+    get_my_ips(): Promise<MessageResponse> {
+        return Promise.resolve(new MessageResponse(JSON.stringify(os.networkInterfaces())));
+    }
+
     @Get('get_my_ip')
     @ApiOkResponse({description: 'OK', type: MessageResponse})
     @ApiBadRequestResponse({description: "Error", type: BadRequestException})
@@ -106,7 +121,22 @@ export class TelegramController {
     get_my_ip(): Promise<MessageResponse> {
         return new Promise<MessageResponse>(resolve => {
             console.log(os.networkInterfaces());
-            axios.get('https://ifconfig.co/ip').then(r => resolve(new MessageResponse(r.data  + JSON.stringify(os.networkInterfaces()))));
+            axios.get('https://ifconfig.co/ip').then(r => resolve(new MessageResponse(r.data)));
+        });
+    }
+
+    @Get('get_browser_ip')
+    @ApiOkResponse({description: 'OK', type: MessageResponse})
+    @ApiBadRequestResponse({description: "Error", type: BadRequestException})
+    @ApiBadRequestResponse({description: "Error", type: ValidateFieldExceptions})
+    @ApiInternalServerErrorResponse({description: "Error", type: InternalErrorException})
+    @Header('Content-type', 'application/json')
+    @HttpCode(200)
+    @Metric('get_browser_ip')
+    get_browser_ip(): Promise<MessageResponse> {
+        return new Promise<MessageResponse>((resolve, reject) => {
+            this.log.info("Check browser ip");
+            this.check_browser_ip.add({act: 'check'}).then(job => job.finished().then(r => resolve(new MessageResponse(r))));
         });
     }
 }
