@@ -6,6 +6,7 @@ import {AuthEntity, AuthTokenType} from "../../entities/auth/auth-entity";
 import {Observable} from 'rxjs';
 import {getLogger} from "log4js";
 import {CryptoService} from "../crypto/crypto-service";
+import {UserUpdateEntity} from "../../entities/user/user-update-entity";
 
 @Injectable()
 export class UserService {
@@ -13,6 +14,41 @@ export class UserService {
     constructor(
         @Inject(MYSQL_MAIN_CONN) private readonly conn: Connection,
         private readonly cryptoService: CryptoService) {
+    }
+
+    updateUser(user: UserUpdateEntity): Observable<boolean> {
+        return new Observable<boolean>(s => {
+            let names: string[] = [];
+            let values: string[] = [];
+            if (user.name !== undefined) {
+                names.push('name');
+                values.push(user.name);
+            }
+            if (user.password !== undefined) {
+                names.push('password');
+                values.push(this.cryptoService.hashPassword(user.password));
+            }
+            if (user.groups !== undefined) {
+                names.push('password');
+                values.push(user.groups.join(','));
+            }
+            if (!names.length) {
+                s.next(false);
+                s.complete();
+            }
+            this.conn.query(
+                "UPDATE app_users " +
+                "SET " + names.map(n => n + ' = ? ').join(',') + "WHERE id = " + user.id,
+                values
+            ).then(res => {
+                s.next(true);
+                s.complete();
+            }, function (err) {
+                getLogger().error(err);
+                s.error();
+                s.complete();
+            });
+        });
     }
 
     createUser(user: UserEntity): Observable<number> {

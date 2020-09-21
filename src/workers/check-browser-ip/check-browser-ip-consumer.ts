@@ -48,7 +48,7 @@ function getBrowser(): Promise<Browser> {
                     '--disable-gpu',
                     '--user-data-dir=/tmp/chrome-profiles/' + process.pid,
                     '--profile-directory=Default',
-                    '--netifs-to-ignore=eth0:0'
+                    '--netifs-to-ignore=en0'
                 ]
             })
             .then(b => {

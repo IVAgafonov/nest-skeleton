@@ -1,5 +1,5 @@
 import {getLogger} from "log4js";
-import {Body, Controller, Get, Header, HttpCode, Post, Req, UseGuards, SetMetadata, Param, Query} from "@nestjs/common";
+import {Body, Controller, Get, Header, HttpCode, HttpException, Post, Req, UseGuards} from "@nestjs/common";
 import {
     ApiBadRequestResponse,
     ApiBearerAuth,
@@ -11,7 +11,7 @@ import {
 import {UserRegisterRequest} from "../requests/user/user-register-request";
 import {UserResponse} from "../responses/user/user-response";
 import {BadRequestException} from "../responses/errors/bad-request-exception";
-import {RoleGuard} from "../guards/role-guard";
+import {RoleGuard, Roles} from "../guards/role-guard";
 import {CreateUserValidator} from "../validators/user/create-user-validator";
 import {UserService} from "../../service/user/user-service";
 import {UserEntity, UserGroup} from "../../entities/user/user-entity";
@@ -24,15 +24,18 @@ import {AuthEntity, AuthTokenType} from "../../entities/auth/auth-entity";
 import {AuthUserValidator} from "../validators/user/auth-user-validator";
 import {ValidateFieldException} from "../responses/errors/validate-field-exception";
 import {AuthorizedRequest} from "../requests/authorized-request";
-import {Roles} from "../guards/role-guard";
 import {Metric, PrometheusService} from "../../service/prometheus/prometheus-service";
 import {MessageResponse} from "../responses/system/message-response";
 import {
     AUTH_CONTROLLER_LOCKER,
-    LC_LOCKED, LC_NOT_EXISTS, LC_IGNORE,
+    LC_LOCKED,
+    LC_NOT_EXISTS,
     TelegramControllerService
 } from "../../service/telegram/telegram-controller-service";
 import {TooManyRequestsException} from "../responses/errors/too-many-requests-exception";
+import {UpdateUserValidator} from "../validators/user/update-user-validator";
+import {UserUpdateRequest} from "../requests/user/user-update-request";
+import {UserUpdateEntity} from "../../entities/user/user-update-entity";
 
 @Controller('api/user')
 @ApiTags("user")
@@ -83,6 +86,44 @@ export class UserController {
                     this.log.info("User " + userRegister.email + " has successfully registered");
                     PrometheusService.counter('registered_users').inc();
                 });
+            });
+        });
+    }
+
+    @ApiOperation({
+        summary: "Update user",
+        description: "Update user"
+    })
+    @ApiOkResponse({description: "Success", type: UserResponse})
+    @ApiBadRequestResponse({description: "Error", type: BadRequestException})
+    @ApiBadRequestResponse({description: "Error", type: ValidateFieldExceptions})
+    @ApiInternalServerErrorResponse({description: "Error", type: InternalErrorException})
+    @Post('update')
+    @Header('Content-Type', 'application/json')
+    @HttpCode(200)
+    @ApiBearerAuth()
+    @UseGuards(RoleGuard)
+    @Roles(UserGroup.USER, UserGroup.ADMIN)
+    @Metric('update_user')
+    update_user(@Req() req: AuthorizedRequest, @Body(UpdateUserValidator) userUpdateRequest: UserUpdateRequest): Observable<UserResponse> {
+        const userUpdateEntity = new UserUpdateEntity();
+        userUpdateEntity.id = req.user.id;
+        userUpdateEntity.name = userUpdateRequest.name;
+        userUpdateEntity.password = userUpdateRequest.password;
+        userUpdateEntity.groups = userUpdateRequest.groups;
+
+        if (!req.user.groups.includes(UserGroup.ADMIN) && userUpdateEntity.groups) {
+            throw new HttpException('Change groups allowed for ADMIN only', 403);
+        }
+
+        console.log(userUpdateEntity);
+
+        return new Observable<UserResponse>(s => {
+            this.userService.updateUser(userUpdateEntity).subscribe(v => {
+                this.userService.getUserById(req.user.id).subscribe(u => {
+                    s.next(UserResponse.createFromEntity(u))
+                    s.complete();
+                })
             });
         });
     }
