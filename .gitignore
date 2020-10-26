@@ -113,3 +113,4 @@ npm-debug.log
 .idea
 config/local.json
 *.iml
+chrome-profile/*

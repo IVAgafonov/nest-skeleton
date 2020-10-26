@@ -27,48 +27,49 @@ function getBrowser(): Promise<Browser> {
     } else {
         if (browser) {
             browser = null;
-            return Promise.reject(new Error('Browser disconnected'));
+            exec("killall Chromium");
         }
-    }
 
-    return new Promise<Browser>((resolve, reject) => {
-        let browserTimeout = setTimeout(() => {
-            if (browser) {
-                browser.close().then(() => browser = null).catch(e => browser = null);
+        return new Promise<Browser>((resolve, reject) => {
+            let browserTimeout = setTimeout(() => {
+                if (browser) {
+                    browser.close().then(() => browser = null).catch(e => browser = null);
+                }
+                reject(new Error('Browser started too long'));
+            }, 15000);
+
+            if (!fs.existsSync('/tmp/chrome-profiles/' + process.pid)) {
+                execSync("cp -r /tmp/chrome-profiles/1 /tmp/chrome-profiles/" + process.pid + " || true");
             }
-            reject(new Error('Browser started too long'));
-        }, 15000);
 
-        if (!fs.existsSync('/tmp/chrome-profiles/' + process.pid)) {
-            execSync("cp -r /tmp/chrome-profiles/1 /tmp/chrome-profiles/" + process.pid + " || true");
-        }
-
-        puppeteer
-            .use(StealthPlugin())
-            .launch({
-                headless: true,
-                //executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-                //slowMo: 2,
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-gpu',
-                    '--user-data-dir=/tmp/chrome-profiles/' + process.pid,
-                    '--profile-directory=Default'
-                ]
-            })
-            .then(b => {
-                browser = b;
-                clearTimeout(browserTimeout);
-                logger.info("Resolve browser: " + process.pid);
-                resolve(browser);
-            }).catch(e => {
+            puppeteer
+                .use(StealthPlugin())
+                .launch({
+                    headless: true,
+                    //executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+                    //slowMo: 2,
+                    args: [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-gpu',
+                        '--user-data-dir=/tmp/chrome-profiles/' + process.pid,
+                        '--profile-directory=Default'
+                    ]
+                })
+                .then(b => {
+                    browser = b;
+                    clearTimeout(browserTimeout);
+                    logger.info("Resolve browser: " + process.pid);
+                    resolve(browser);
+                }).catch(e => {
                 clearTimeout(browserTimeout);
                 logger.error(e);
-                //exec("killall Chromium");
+                exec("killall Chromium");
+                browser = null;
                 reject(new Error('Error during starting browser'));
+            });
         });
-    });
+    }
 }
 
 function getGoogleAutocomplete(b: Browser, keyword: string, lang: string, deep = 1): Promise<GoogleAutocompleteResponse[]> {
